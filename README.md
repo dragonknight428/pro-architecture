@@ -53,18 +53,6 @@ As Uber scaled from a city-by-city ride-hailing app into a planetary mobility pl
 
 ---
 
-## 🗺️ Tiered Traffic Routing & Interservice Communication
-
-The core request routing model across the **Edge Gateway (Tier 1)**, **Domain Gateways (Tier 2)**, and internal **Ride-Sharing Microservices**, illustrating:
-1. **Intra-Domain gRPC IPC (Green Vectors):** Microservices inside the same bounded domain invoke each other directly via low-latency internal gRPC stubs.
-2. **Blocked Cross-Domain Calls (Red Vector):** Services can **never** directly invoke microservices residing in a different domain—all cross-domain collaboration is forced through Tier 2 Sub-Gateways.
-
-<p align="center">
-  <img src="docs/images/uber-doma-architecture-dark.svg" alt="Uber DOMA Tiered Traffic Routing Architecture with Intra-Domain gRPC and Blocked Cross-Domain Calls" width="100%">
-</p>
-
----
-
 ## 🔀 Inter-Gateway & Same-Domain Interservice Communication
 
 A major challenge in distributed architectures is understanding **how services communicate inside vs. across domain boundaries**. DOMA provides strict architectural rules:
@@ -262,68 +250,3 @@ Dependencies flow strictly downward. A lower layer **never invokes an upper laye
 </details>
 
 ---
-
-## 🏁 Quickstart: Run Locally
-
-### 1. Clone & Build
-```bash
-git clone https://github.com/YeamimHossainSajid/uber-doma-architecture.git
-cd uber-doma-architecture
-./mvnw clean install -DskipTests
-```
-
-On Windows (PowerShell / cmd):
-```powershell
-.\mvnw.cmd clean install -DskipTests
-```
-
-> The Maven Wrapper downloads the pinned Maven version (3.10.0, see `.mvn/wrapper/maven-wrapper.properties`) on first run, so no local Maven install is required — only a JDK 21.
-
-### 2. Launch Local Environment (Docker Compose)
-```bash
-# Spin up core Mobility and Billing domains with databases:
-docker compose --profile mobility-billing up -d
-```
-
-### 3. Verify Composite Ingress
-```bash
-curl -X POST http://localhost:8080/api/v1/mobility/rides/request \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer test-jwt-token" \
-  -d '{
-    "riderId": "usr_99182a",
-    "pickup": { "lat": 37.7749, "lng": -122.4194 },
-    "dropoff": { "lat": 37.7891, "lng": -122.4014 },
-    "serviceClass": "UBER_X"
-  }'
-```
-
----
-
-## 📊 Performance Benchmarks (k6 Load Test)
-
-Tested under $15,000\text{ RPS}$ sustained workload:
-
-| Metric | Flat REST/JSON Mesh | DOMA Two-Tier gRPC (This Repo) | Improvement |
-| :--- | :---: | :---: | :---: |
-| **p50 Latency** | `132 ms` | `24 ms` | **$5.5\times$ faster** |
-| **p95 Latency** | `310 ms` | `51 ms` | **$6.1\times$ faster** |
-| **p99 Latency** | `680 ms` | `88 ms` | **$7.7\times$ faster** |
-| **Network Payload Size** | $4.2\text{ MB/s}$ | $0.9\text{ MB/s}$ | **$78\%$ reduction** |
-| **Max Throughput** | $3,400\text{ RPS}$ | $14,200\text{ RPS}$ | **$4.1\times$ capacity** |
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please check out issues labeled [`good first issue`](https://github.com/YeamimHossainSajid/uber-doma-architecture/issues).
-
----
-
-## 📄 License
-
-Distributed under the **Apache 2.0 License**. See [`LICENSE`](LICENSE) for complete terms.
-
-<p align="center">
-  <b>Designed for architects and engineers building hyper-scale distributed platforms.</b>
-</p>
